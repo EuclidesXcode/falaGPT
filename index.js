@@ -3,6 +3,7 @@ const express = require('express');
 const { Client, MessageMedia } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const GptClass = require('./src/gpt-class')
+const AudioConverter = require('./src/audio-converter')
 
 const app = express();
 const client = new Client();
@@ -19,17 +20,35 @@ client.on('ready', () => {
 
 client.on('message', async msg => {
 
-    if(msg.type !== 'chat' || msg.from === 'status@broadcast' || msg.from === '120363112131039503@g.us') return
+    if(msg.from === 'status@broadcast' || msg.from === '120363112131039503@g.us') return
 
-    console.log('Mensagem recebida:', msg.body, "tipo: ", msg.type, "from: ", msg.from);
+    console.log('Mensagem recebida:', msg.body, "TYPE: ", msg.type, "FROM: ", msg.from);
 
-    const response = await GptClass.generateOpenAIResponse(msg.body);
-    
-    if(response.msg) {
-        msg.reply(response.msg);
-    } else {
-        msg.reply(response);
+    if(msg.type === 'chat') {
+
+        const response = await GptClass.generateOpenAIResponse(msg.body);
+        
+        if(response.msg) {
+            msg.reply(response.msg);
+        } else {
+            msg.reply(response);
+        }
+    } else if (msg.type === 'ptt') {
+
+        const text = await AudioConverter.downloadAudio(msg)
+
+        console.log('texto convertido: ', text)
+
+        const response = await GptClass.generateOpenAIResponse(text);
+        
+        if(response.msg) {
+            msg.reply(response.msg);
+        } else {
+            msg.reply(response);
+        }
+
     }
+
 });
 
 

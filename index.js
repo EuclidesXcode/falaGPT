@@ -19,7 +19,7 @@ client.on('ready', () => {
 
 client.on('message', async msg => {
 
-    if(msg.type !== 'chat' || msg.from === 'status@broadcast') return
+    if(msg.type !== 'chat' || msg.from === 'status@broadcast' || msg.from === '120363112131039503@g.us') return
 
     console.log('Mensagem recebida:', msg.body, "tipo: ", msg.type, "from: ", msg.from);
 

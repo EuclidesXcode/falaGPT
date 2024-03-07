@@ -1,29 +1,33 @@
-const OpenAI = require("openai")
-const openai = new OpenAI();
+const { Configuration, OpenAIApi } = require("openai");
+
+const configuration = new Configuration({
+    apiKey: process.env.OPENAI_API_KEY,
+});
+const openai = new OpenAIApi(configuration);
 
 class GptClass {
 
     static generateOpenAIResponse = async (message) => {
-
         const maxRetries = 3;
         let retryDelay = 10000;
 
         for (let i = 0; i < maxRetries; i++) {
             try {
-                const response = await openai.completions.create({
-                    model: "gpt-3.5-turbo-instruct",
-                    prompt: message,
-                    max_tokens: 150,
-                    temperature: 1,
-                }, {
-                    headers: {
-                        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
-                    }
+                
+                const response = await openai.createChatCompletion({
+                    model: "gpt-3.5-turbo",
+                    messages: [{role: "system", content: "Este é o seu prompt de sistema"}, {role: "user", content: message}],
+                    temperature: 0,
+                    max_tokens: 500,
                 });
 
-                console.log('respons: ', response)
+                console.log('Response: ', response);
 
-                return response.choices[0].text.trim();
+                if (response.data && response.data.choices && response.data.choices.length > 0) {
+                    return response.data.choices[0].message.content.trim();
+                }
+
+                return "Não foi possível obter uma resposta.";
             } catch (error) {
                 console.error('Erro ao gerar resposta da OpenAI:', error);
 
@@ -35,7 +39,7 @@ class GptClass {
                     retryDelay *= 2;
                 } else {
                     return {
-                        msg: `Error: ${error.code || error.message}`
+                        msg: `Error: ${error.response?.status || error.message}`
                     };
                 }
             }
@@ -46,7 +50,6 @@ class GptClass {
             msg: "Falha após várias tentativas. Por favor, tente novamente mais tarde."
         };
     }
-
 }
 
-module.exports = GptClass
+module.exports = GptClass;
